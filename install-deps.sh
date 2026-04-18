@@ -164,8 +164,8 @@ main() {
 [install-deps] 安装完成。
 [install-deps] Python 虚拟环境: $VENV_DIR
 [install-deps] 下一步：
-  1. 编辑 $ENV_FILE，填入 LLM 和 SMTP 配置
-  2. 运行 ./start-all.sh 启动所有服务
+  1. 运行 ./start-all.sh 启动所有服务
+  2. 打开前端“系统配置”页面填写 LLM 与 SMTP（也可手动编辑 $ENV_FILE）
 MSG
 }
 
