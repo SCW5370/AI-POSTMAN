@@ -121,6 +121,20 @@ AI Postman 理解你的职业背景、关注领域和当前目标，主动过滤
 > 强烈建议部署到服务器（国内云服务器 2C2G 即可），一次部署，每天准时收信。
 > [跳转至服务器持久部署 →](#️-服务器持久部署推荐)
 
+### 30 秒最短路径（推荐新用户先走这条）
+
+```bash
+git clone https://github.com/SCW5370/AI-POSTMAN.git
+cd AI-POSTMAN
+bash install-deps.sh
+bash start-all.sh
+```
+
+然后打开 `http://<你的服务器IP或域名>`（或 `http://127.0.0.1:3000`）：
+
+- 进入“系统配置”页填写：`LLM_API_KEY / LLM_BASE_URL / LLM_MODEL / SMTP_USERNAME / SMTP_PASSWORD`
+- 保存后直接在页面点击“生成并发送邮件”即可验证全链路
+
 ---
 
 ### 选择你的部署方式
