@@ -1,0 +1,3 @@
+ALTER TABLE digest_build_tasks
+ADD COLUMN force_llm BOOLEAN NOT NULL DEFAULT FALSE;
+

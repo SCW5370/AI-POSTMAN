@@ -1,0 +1,53 @@
+services:
+  postgres:
+    image: postgres:16
+    container_name: ai-postman-postgres
+    environment:
+      POSTGRES_DB: aipostman
+      POSTGRES_USER: aipostman
+      POSTGRES_PASSWORD: aipostman
+    ports:
+      - "5432:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  redis:
+    image: redis:7
+    container_name: ai-postman-redis
+    ports:
+      - "6379:6379"
+
+  worker:
+    build:
+      context: ../worker
+      dockerfile: Dockerfile
+    container_name: ai-postman-worker
+    ports:
+      - "8000:8000"
+    depends_on:
+      - postgres
+      - redis
+
+  backend:
+    build:
+      context: ../backend
+      dockerfile: Dockerfile
+    container_name: ai-postman-backend
+    environment:
+      DB_URL: jdbc:postgresql://postgres:5432/aipostman
+      DB_USERNAME: aipostman
+      DB_PASSWORD: aipostman
+      REDIS_HOST: redis
+      REDIS_PORT: 6379
+      WORKER_BASE_URL: http://worker:8000
+      SERVER_PORT: 8080
+      RESEND_ENABLED: "false"
+    ports:
+      - "8080:8080"
+    depends_on:
+      - postgres
+      - redis
+      - worker
+
+volumes:
+  postgres_data:

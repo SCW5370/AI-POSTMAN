@@ -1,0 +1,91 @@
+spring:
+  application:
+    name: ai-postman
+  datasource:
+    url: ${DB_URL:jdbc:postgresql://127.0.0.1:5432/aipostman}
+    username: ${DB_USERNAME:aipostman}
+    password: ${DB_PASSWORD:aipostman}
+  jpa:
+    hibernate:
+      ddl-auto: update
+    open-in-view: false
+    properties:
+      hibernate:
+        jdbc:
+          time_zone: UTC
+  flyway:
+    enabled: true
+    locations: classpath:db/migration
+  data:
+    redis:
+      host: ${REDIS_HOST:127.0.0.1}
+      port: ${REDIS_PORT:6379}
+  thymeleaf:
+    cache: false
+  quartz:
+    job-store-type: memory
+    auto-startup: true
+  mail:
+    host: ${SMTP_HOST:smtp.example.com}
+    port: ${SMTP_PORT:587}
+    username: ${SMTP_USERNAME:your@example.com}
+    password: ${SMTP_PASSWORD:your_smtp_password}
+    properties:
+      mail:
+        smtp:
+          auth: true
+          starttls:
+            enable: true
+
+server:
+  port: ${SERVER_PORT:8080}
+
+app:
+  public-base-url: ${APP_PUBLIC_BASE_URL:http://127.0.0.1:8080}
+  worker:
+    base-url: ${WORKER_BASE_URL:http://127.0.0.1:8000}
+    fetch-timeout-seconds: ${WORKER_FETCH_TIMEOUT_SECONDS:25}
+    editorial-timeout-seconds: ${WORKER_EDITORIAL_TIMEOUT_SECONDS:8}
+    finalize-timeout-seconds: ${WORKER_FINALIZE_TIMEOUT_SECONDS:70}
+    fetch-batch-size: ${WORKER_FETCH_BATCH_SIZE:4}
+    fetch-max-retries: ${WORKER_FETCH_MAX_RETRIES:2}
+    fetch-retry-backoff-ms: ${WORKER_FETCH_RETRY_BACKOFF_MS:1200}
+  digest:
+    high-score-threshold: ${DIGEST_HIGH_SCORE_THRESHOLD:70}
+    medium-score-threshold: ${DIGEST_MEDIUM_SCORE_THRESHOLD:50}
+    medium-score-min-count: ${DIGEST_MEDIUM_SCORE_MIN_COUNT:2}
+    max-candidate-pool: ${DIGEST_MAX_CANDIDATE_POOL:50}
+    min-item-score: ${DIGEST_MIN_ITEM_SCORE:30}
+    exclude-recent-sent-days: ${DIGEST_EXCLUDE_RECENT_SENT_DAYS:3}
+    editorial-candidate-limit: ${DIGEST_EDITORIAL_CANDIDATE_LIMIT:4}
+    force-llm-finalize: ${DIGEST_FORCE_LLM_FINALIZE:true}
+    ensure-llm-before-send: ${DIGEST_ENSURE_LLM_BEFORE_SEND:true}
+  scheduler:
+    prebuild-lead-hours: ${SCHEDULER_PREBUILD_LEAD_HOURS:8}
+  discovery:
+    auto-enabled: ${DISCOVERY_AUTO_ENABLED:true}
+    auto-conservative-max-topics: ${DISCOVERY_AUTO_CONSERVATIVE_MAX_TOPICS:2}
+    auto-conservative-max-approvals-per-run: ${DISCOVERY_AUTO_CONSERVATIVE_MAX_APPROVALS_PER_RUN:2}
+    auto-conservative-min-confidence: ${DISCOVERY_AUTO_CONSERVATIVE_MIN_CONFIDENCE:80}
+    auto-conservative-cooldown-minutes: ${DISCOVERY_AUTO_CONSERVATIVE_COOLDOWN_MINUTES:720}
+    auto-aggressive-max-topics: ${DISCOVERY_AUTO_AGGRESSIVE_MAX_TOPICS:5}
+    auto-aggressive-max-approvals-per-run: ${DISCOVERY_AUTO_AGGRESSIVE_MAX_APPROVALS_PER_RUN:8}
+    auto-aggressive-min-confidence: ${DISCOVERY_AUTO_AGGRESSIVE_MIN_CONFIDENCE:60}
+    auto-aggressive-cooldown-minutes: ${DISCOVERY_AUTO_AGGRESSIVE_COOLDOWN_MINUTES:180}
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health,info
+
+# 腾讯云配置
+tencent:
+  cloud:
+    secret-id: ${TENCENT_CLOUD_SECRET_ID:}
+    secret-key: ${TENCENT_CLOUD_SECRET_KEY:}
+    ses:
+      region: ${TENCENT_CLOUD_SES_REGION:ap-guangzhou}
+      from-email: ${TENCENT_CLOUD_SES_FROM_EMAIL:your@yourdomain.com}
+      from-name: ${TENCENT_CLOUD_SES_FROM_NAME:AI Postman}
+

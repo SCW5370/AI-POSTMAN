@@ -1,0 +1,45 @@
+# 环境变量（含敏感密钥，不提交）
+.env
+backend/.env
+worker/.env
+
+# 构建产物
+backend/target/
+frontend/dist/
+frontend/node_modules/
+worker/.venv/
+.venv/
+.runtime/
+
+# Python 缓存
+__pycache__/
+*.pyc
+*.pyo
+
+# 日志
+*.log
+backend/backend.log
+worker/worker.log
+frontend/frontend.log
+logs/
+
+# 运行时
+.runtime/*
+!.runtime/.gitkeep
+*.pid
+
+# 敏感文件
+*.pem
+*.key
+*.p12
+*.pfx
+id_rsa
+id_ed25519
+
+# macOS
+.DS_Store
+
+# IDE
+.idea/
+.vscode/
+*.iml

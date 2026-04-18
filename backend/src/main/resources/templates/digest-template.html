@@ -1,0 +1,443 @@
+<!DOCTYPE html>
+<html lang="zh-CN" xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AI 送报员 | 今日情报简报</title>
+    <style>
+        /* 基础样式 */
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+            background: #f8fafc;
+            color: #1e293b;
+            line-height: 1.6;
+            margin: 0;
+            padding: 20px 0;
+        }
+        .wrap {
+            max-width: 720px;
+            margin: 0 auto;
+            background: #ffffff;
+            padding: 40px;
+            border-radius: 16px;
+            box-shadow: 0 10px 15px -3px rgba(0, 0, 0, 0.1), 0 4px 6px -2px rgba(0, 0, 0, 0.05);
+        }
+        
+        /* 响应式设计 */
+        @media (max-width: 768px) {
+            .wrap {
+                padding: 24px;
+                border-radius: 12px;
+            }
+            .header h1 {
+                font-size: 22px;
+            }
+            .header p {
+                font-size: 14px;
+            }
+            .item {
+                padding: 20px 0;
+            }
+            .item h3 {
+                font-size: 17px;
+            }
+            .summary {
+                font-size: 14px;
+            }
+            .reason {
+                padding: 14px;
+                font-size: 13px;
+            }
+            .actions {
+                flex-wrap: wrap;
+                gap: 12px;
+            }
+            .actions button {
+                font-size: 13px;
+                padding: 8px 16px;
+            }
+        }
+        
+        @media (max-width: 480px) {
+            .wrap {
+                padding: 20px;
+            }
+            .header h1 {
+                font-size: 20px;
+            }
+            .meta {
+                flex-direction: column;
+                align-items: flex-start;
+                gap: 8px;
+            }
+            .section-badge {
+                padding: 3px 10px;
+                font-size: 11px;
+            }
+            .actions {
+                flex-direction: column;
+                align-items: flex-start;
+            }
+            .actions button {
+                width: 100%;
+                text-align: left;
+            }
+        }
+        
+        /* 头部样式 */
+        .header {
+            border-bottom: 2px solid #f1f5f9;
+            padding-bottom: 28px;
+            margin-bottom: 32px;
+            position: relative;
+        }
+        .header::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 60px;
+            height: 2px;
+            background: linear-gradient(90deg, #3b82f6, #8b5cf6);
+        }
+        .header h1 {
+            margin: 0;
+            font-size: 26px;
+            font-weight: 700;
+            color: #0f172a;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+        .header h1::before {
+            content: '📰';
+            font-size: 28px;
+        }
+        .header p {
+            margin: 12px 0 0;
+            color: #64748b;
+            font-size: 16px;
+            line-height: 1.5;
+        }
+        
+        /* 内容项样式 */
+        .item {
+            border-top: 1px solid #f1f5f9;
+            padding: 28px 0;
+            position: relative;
+        }
+        .item:first-child {
+            border-top: none;
+        }
+        .item:hover {
+            background: #f8fafc;
+            border-radius: 8px;
+            margin: 0 -16px;
+            padding: 28px 16px;
+            transition: all 0.3s ease;
+        }
+        
+        /* 元信息样式 */
+        .meta {
+            color: #64748b;
+            font-size: 14px;
+            margin-bottom: 16px;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+            flex-wrap: wrap;
+        }
+        .section-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 5px 14px;
+            border-radius: 999px;
+            font-size: 12px;
+            font-weight: 600;
+            text-transform: uppercase;
+            letter-spacing: 0.05em;
+            gap: 4px;
+        }
+        .section-badge.must_read {
+            background: #fee2e2;
+            color: #991b1b;
+            border: 1px solid #fecaca;
+        }
+        .section-badge.must_read::before {
+            content: '🔥';
+        }
+        .section-badge.focus_updates {
+            background: #dbeafe;
+            color: #1e40af;
+            border: 1px solid #bfdbfe;
+        }
+        .section-badge.focus_updates::before {
+            content: '🔍';
+        }
+        .section-badge.worth_saving {
+            background: #ecfccb;
+            color: #4d7c0f;
+            border: 1px solid #d9f99d;
+        }
+        .section-badge.worth_saving::before {
+            content: '💾';
+        }
+        .section-badge.surprise {
+            background: #ede9fe;
+            color: #5b21b6;
+            border: 1px solid #ddd6fe;
+        }
+        .section-badge.surprise::before {
+            content: '🎉';
+        }
+        .source-name {
+            flex: 1;
+            font-weight: 500;
+        }
+        .enrichment-badge {
+            display: inline-flex;
+            align-items: center;
+            padding: 3px 10px;
+            border-radius: 999px;
+            font-size: 12px;
+            background: #ecfeff;
+            color: #155e75;
+            border: 1px solid #bae6fd;
+            gap: 4px;
+        }
+        .enrichment-badge::before {
+            content: '🤖';
+        }
+        
+        /* 标题样式 */
+        .item h3 {
+            margin: 0 0 16px;
+            font-size: 19px;
+            font-weight: 600;
+            line-height: 1.4;
+        }
+        .item h3 a {
+            color: #0f172a;
+            text-decoration: none;
+            transition: all 0.2s ease;
+            display: inline-block;
+            position: relative;
+        }
+        .item h3 a:hover {
+            color: #3b82f6;
+            transform: translateX(4px);
+        }
+        .item h3 a::after {
+            content: '';
+            position: absolute;
+            bottom: -2px;
+            left: 0;
+            width: 0;
+            height: 2px;
+            background: #3b82f6;
+            transition: width 0.2s ease;
+        }
+        .item h3 a:hover::after {
+            width: 100%;
+        }
+        
+        /* 摘要样式 */
+        .summary {
+            color: #475569;
+            font-size: 15px;
+            margin-bottom: 20px;
+            line-height: 1.6;
+        }
+        
+        /* 相关性说明样式 */
+        .reason {
+            background: #f1f5f9;
+            padding: 18px;
+            border-radius: 12px;
+            font-size: 14px;
+            color: #334155;
+            margin-bottom: 20px;
+            border-left: 4px solid #3b82f6;
+            position: relative;
+        }
+        .reason::before {
+            content: '💡';
+            position: absolute;
+            top: -8px;
+            left: 12px;
+            background: #3b82f6;
+            color: white;
+            border-radius: 50%;
+            width: 20px;
+            height: 20px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            font-size: 12px;
+        }
+        
+        /* 操作按钮样式 */
+        .actions {
+            display: flex;
+            gap: 12px;
+            align-items: center;
+        }
+        .actions button {
+            display: inline-flex;
+            align-items: center;
+            gap: 6px;
+            background: transparent;
+            border: 1px solid #e2e8f0;
+            border-radius: 8px;
+            padding: 10px 20px;
+            font-size: 14px;
+            font-weight: 500;
+            color: #475569;
+            cursor: pointer;
+            transition: all 0.2s ease;
+        }
+        .actions button:hover {
+            background: #f8fafc;
+            border-color: #cbd5e1;
+            transform: translateY(-1px);
+        }
+        .actions button.positive:hover {
+            background: #dcfce7;
+            border-color: #bbf7d0;
+            color: #15803d;
+        }
+        .actions button.neutral:hover {
+            background: #fef3c7;
+            border-color: #fde68a;
+            color: #92400e;
+        }
+        .actions button.follow:hover {
+            background: #dbeafe;
+            border-color: #bfdbfe;
+            color: #1e40af;
+        }
+        
+        /* 反馈成功样式 */
+        .feedback-success {
+            color: #16a34a;
+            font-size: 13px;
+            margin-top: 12px;
+            display: flex;
+            align-items: center;
+            gap: 6px;
+        }
+        .feedback-success::before {
+            content: '✓';
+            font-weight: bold;
+        }
+        
+        /* 页脚样式 */
+        .footer {
+            border-top: 1px solid #f1f5f9;
+            padding-top: 28px;
+            margin-top: 40px;
+            color: #64748b;
+            font-size: 14px;
+            text-align: center;
+        }
+        .footer p {
+            margin: 0 0 8px;
+            line-height: 1.5;
+        }
+        .footer p:last-child {
+            margin-bottom: 0;
+        }
+        .footer a {
+            color: #3b82f6;
+            text-decoration: none;
+            transition: color 0.2s ease;
+        }
+        .footer a:hover {
+            color: #2563eb;
+            text-decoration: underline;
+        }
+    </style>
+</head>
+<body>
+<div class="wrap">
+    <div class="header">
+        <h1>AI 送报员 | 今日情报简报</h1>
+        <p th:text="'亲爱的 ' + ${userName} + '，以下是 ' + ${digestDate} + ' 最值得关注的 ' + ${totalItems} + ' 条内容。'">亲爱的用户，以下是今日最值得关注的内容。</p>
+    </div>
+    
+    <div class="item" th:each="item : ${items}">
+        <div class="meta">
+            <span th:class="'section-badge ' + ${item.section}" th:text="${#strings.capitalize(#strings.replace(item.section, '_', ' '))}">Must Read</span>
+            <span class="source-name" th:text="${item.sourceName}">GitHub Blog</span>
+            <span class="enrichment-badge" th:text="${item.enrichmentStatus}">llm_finalized</span>
+        </div>
+        <h3><a th:href="${item.url}" th:text="${item.title}">标题</a></h3>
+        <p class="summary" th:text="${item.summary}">摘要</p>
+        <div class="reason" th:text="${item.relevanceReason}">为什么与你有关</div>
+        <div class="actions">
+            <button class="positive" th:data-url="${item.usefulFeedbackUrl}">👍 有用</button>
+            <button class="neutral" th:data-url="${item.normalFeedbackUrl}">😐 一般</button>
+            <button class="follow" th:data-url="${item.followFeedbackUrl}">🔔 继续追踪</button>
+        </div>
+    </div>
+    
+    <div class="footer">
+        <p>这是一封由 AI 送报员自动生成的邮件，旨在为你提供最相关的技术资讯。</p>
+        <p>如果您有任何反馈或建议，请 <a href="mailto:feedback@aipostman.com">回复此邮件</a>。</p>
+        <p>© 2026 AI 送报员 | <a href="#">隐私政策</a> | <a href="#">退订</a></p>
+    </div>
+</div>
+
+<script>
+    // 处理反馈点击事件
+    document.addEventListener('DOMContentLoaded', function() {
+        const feedbackButtons = document.querySelectorAll('.actions button');
+        
+        feedbackButtons.forEach(button => {
+            button.addEventListener('click', function(e) {
+                e.preventDefault(); // 阻止默认行为
+                
+                const url = this.getAttribute('data-url');
+                const action = this.textContent.trim();
+                
+                // 显示加载状态
+                const originalText = this.textContent;
+                this.textContent = '处理中...';
+                this.disabled = true;
+                this.style.opacity = '0.6';
+                
+                // 发送异步请求
+                fetch(url, { 
+                    method: 'GET',
+                    mode: 'no-cors' // 避免跨域问题
+                }).then(() => {
+                    // 显示成功反馈
+                    this.textContent = '✓ ' + action;
+                    this.style.opacity = '1';
+                    this.style.borderColor = '#16a34a';
+                    this.style.color = '#16a34a';
+                    
+                    // 在操作下方显示成功消息
+                    const feedbackDiv = document.createElement('div');
+                    feedbackDiv.className = 'feedback-success';
+                    feedbackDiv.textContent = '感谢您的反馈！';
+                    
+                    // 找到父级元素并添加成功消息
+                    const actionsDiv = this.parentElement;
+                    if (!actionsDiv.nextElementSibling || !actionsDiv.nextElementSibling.classList.contains('feedback-success')) {
+                        actionsDiv.parentNode.appendChild(feedbackDiv);
+                    }
+                }).catch(() => {
+                    // 显示错误状态
+                    this.textContent = '反馈失败，请重试';
+                    this.style.opacity = '1';
+                    this.style.borderColor = '#dc2626';
+                    this.style.color = '#dc2626';
+                    this.disabled = false;
+                });
+            });
+        });
+    });
+</script>
+</body>
+</html>

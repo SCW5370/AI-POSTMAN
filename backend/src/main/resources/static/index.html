@@ -1,0 +1,624 @@
+<!doctype html>
+<html lang="zh-CN">
+<head>
+    <meta charset="utf-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1">
+    <title>AI 送报员 · Web MVP</title>
+    <style>
+        :root {
+            --bg: #f3f7fb;
+            --card: #ffffff;
+            --line: #d8e1eb;
+            --text: #142230;
+            --muted: #566577;
+            --primary: #125c9c;
+            --primary-soft: #e8f2fb;
+        }
+        * { box-sizing: border-box; }
+        body {
+            margin: 0;
+            font-family: "SF Pro Text", "PingFang SC", "Segoe UI", sans-serif;
+            color: var(--text);
+            background:
+                    radial-gradient(circle at 8% 10%, #dcecff 0%, transparent 45%),
+                    radial-gradient(circle at 92% 8%, #dff7f2 0%, transparent 42%),
+                    var(--bg);
+        }
+        .page {
+            max-width: 1080px;
+            margin: 28px auto;
+            padding: 0 16px 24px;
+        }
+        .hero {
+            background: linear-gradient(120deg, #173e67 0%, #116ea3 55%, #2b9f8e 100%);
+            color: #fff;
+            border-radius: 20px;
+            padding: 24px;
+            box-shadow: 0 14px 28px rgba(18, 62, 103, .24);
+        }
+        .hero h1 { margin: 0 0 8px; font-size: 28px; }
+        .hero p { margin: 0; opacity: .95; }
+        .grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(320px, 1fr));
+            gap: 14px;
+            margin-top: 16px;
+        }
+        .card {
+            background: var(--card);
+            border: 1px solid var(--line);
+            border-radius: 14px;
+            padding: 16px;
+            box-shadow: 0 6px 14px rgba(20, 34, 48, .06);
+        }
+        h2 { margin: 2px 0 14px; font-size: 18px; }
+        .help { color: var(--muted); font-size: 13px; margin: 0 0 12px; }
+        .row { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+        .row.single { grid-template-columns: 1fr; }
+        input, select, textarea, button {
+            width: 100%;
+            border-radius: 10px;
+            border: 1px solid var(--line);
+            font-size: 14px;
+            padding: 10px;
+            background: #fff;
+        }
+        textarea { min-height: 76px; resize: vertical; }
+        button {
+            cursor: pointer;
+            background: var(--primary);
+            color: #fff;
+            border: 0;
+            font-weight: 600;
+        }
+        button.secondary {
+            background: var(--primary-soft);
+            color: var(--primary);
+            border: 1px solid #c8ddf3;
+        }
+        .actions { display: grid; gap: 8px; }
+        .mono {
+            font-family: ui-monospace, "SF Mono", Menlo, monospace;
+            font-size: 12px;
+            white-space: pre-wrap;
+            background: #f7fbff;
+            border: 1px solid #deebf6;
+            border-radius: 10px;
+            padding: 10px;
+            max-height: 240px;
+            overflow: auto;
+        }
+        .pill {
+            display: inline-block;
+            font-size: 12px;
+            margin-right: 6px;
+            margin-bottom: 6px;
+            padding: 4px 8px;
+            border-radius: 999px;
+            background: #edf4fb;
+            color: #2f4f70;
+        }
+        .status {
+            margin-top: 8px;
+            padding: 8px 10px;
+            border-radius: 8px;
+            font-size: 13px;
+            background: #eef7ff;
+            color: #1f4e7c;
+        }
+        .status.error { background: #fff2f2; color: #8a1f1f; }
+        a.btn-link {
+            display: inline-block;
+            margin-top: 8px;
+            font-size: 13px;
+            color: var(--primary);
+            text-decoration: none;
+        }
+    </style>
+</head>
+<body>
+<main class="page">
+    <section class="hero">
+        <h1>AI 送报员 · Web MVP 控制台</h1>
+        <p>第一阶段：先跑通业务闭环。完成 onboarding、偏好设置、抓取、构建、发送、预览。</p>
+    </section>
+
+    <section class="grid">
+        <article class="card">
+            <h2>1) Onboarding 初始化</h2>
+            <p class="help">可一次创建用户 + 偏好 + 默认数据源，适合首次配置。</p>
+            <div class="row">
+                <input id="email" placeholder="收件邮箱" value="3276532080@qq.com">
+                <input id="displayName" placeholder="显示名" value="Demo User">
+            </div>
+            <div class="row">
+                <input id="timezone" placeholder="时区" value="Asia/Shanghai">
+                <input id="deliveryTime" placeholder="发送时间" value="08:00">
+            </div>
+            <div class="row">
+                <select id="deliveryMode">
+                    <option value="BALANCED">BALANCED</option>
+                    <option value="QUIET">QUIET</option>
+                    <option value="HUNTER">HUNTER</option>
+                </select>
+                <input id="maxItems" type="number" min="1" max="20" value="5" placeholder="每期条数">
+            </div>
+            <div class="row">
+                <input id="explorationRatio" type="number" step="0.01" min="0" max="0.8" value="0.10" placeholder="探索比例">
+                <input id="preferredTopics" placeholder="偏好主题，逗号分隔" value="后端开发,AI Agent,GitHub开源项目">
+            </div>
+            <div class="row single">
+                <input id="blockedTopics" placeholder="屏蔽主题，逗号分隔" value="娱乐八卦">
+            </div>
+            <div class="row single">
+                <textarea id="goals">最近在准备后端实习，也关注AI Agent方向</textarea>
+            </div>
+            <div class="actions">
+                <button id="setupBtn">初始化用户与偏好</button>
+            </div>
+            <div id="setupStatus" class="status">尚未执行</div>
+        </article>
+
+        <article class="card">
+            <h2>2) 业务流程操作</h2>
+            <p class="help">顺序建议：Fetch -> Build -> Send。用户 ID 从左侧初始化后自动填充。</p>
+            <div class="row">
+                <input id="userId" placeholder="userId">
+                <input id="digestDate" placeholder="digestDate (YYYY-MM-DD)">
+            </div>
+            <div class="row single">
+                <label style="display:flex;align-items:center;gap:8px;font-size:13px;color:#334155;">
+                    <input id="forceLlmBuild" type="checkbox" style="width:auto;">
+                    Build 时强制 LLM 参与（即使已有 draft 也会重新精修）
+                </label>
+            </div>
+            <div class="actions">
+                <button class="secondary" id="fetchBtn">Fetch 内容</button>
+                <button class="secondary" id="fetchSyncBtn">Fetch（同步调试）</button>
+                <button class="secondary" id="prebuildBtn">Prebuild（夜间模拟）</button>
+                <button class="secondary" id="buildBtn">Build 日报（异步）</button>
+                <button class="secondary" id="finalizeBtn">Finalize 待精修 Draft</button>
+                <button class="secondary" id="debugBtn">Debug 候选</button>
+                <button id="sendBtn">Send 最新日报</button>
+            </div>
+            <div id="flowStatus" class="status">尚未执行</div>
+            <a class="btn-link" id="htmlPreviewLink" href="#" target="_blank" style="display:none;">打开最新日报 HTML 预览</a>
+        </article>
+
+        <article class="card">
+            <h2>3) 数据源检查</h2>
+            <p class="help">初始化后可点刷新查看已启用源。</p>
+            <div class="actions">
+                <button class="secondary" id="listSourcesBtn">刷新数据源列表</button>
+            </div>
+            <div id="sources" class="mono">[]</div>
+        </article>
+
+        <article class="card">
+            <h2>4) 结果输出</h2>
+            <p class="help">接口返回会打印在这里，方便直接调试。</p>
+            <div id="result" class="mono">Ready.</div>
+        </article>
+
+        <article class="card">
+            <h2>5) 用户画像管理</h2>
+            <p class="help">查看和编辑用户的画像信息，包括兴趣、职业、偏好话题等。</p>
+            <div class="row">
+                <input id="profileUserId" placeholder="userId" value="1">
+                <button class="secondary" id="loadProfileBtn">加载画像</button>
+            </div>
+            <div class="row single">
+                <input id="profileOccupation" placeholder="职业">
+            </div>
+            <div class="row single">
+                <input id="profileInterests" placeholder="兴趣爱好，逗号分隔（如：技术,音乐,旅行）">
+            </div>
+            <div class="row single">
+                <input id="profilePreferredTopics" placeholder="偏好话题，逗号分隔（如：人工智能,编程语言,技术趋势）">
+            </div>
+            <div class="row single">
+                <input id="profileRecentActivities" placeholder="最近活动，逗号分隔（如：学习AI,参加技术会议）">
+            </div>
+            <div class="actions">
+                <button id="saveProfileBtn">保存画像</button>
+            </div>
+            <div id="profileStatus" class="status">尚未执行</div>
+        </article>
+
+        <article class="card">
+            <h2>6) 邮件内容预览</h2>
+            <p class="help">在发送前查看邮件的最终效果，包括HTML格式和内容布局。</p>
+            <div class="row">
+                <input id="previewDigestId" placeholder="digestId">
+                <button class="secondary" id="previewBtn">预览邮件</button>
+            </div>
+            <div class="actions">
+                <a class="btn-link" id="emailPreviewLink" href="#" target="_blank" style="display:none;">打开邮件预览</a>
+            </div>
+            <div id="previewStatus" class="status">尚未执行</div>
+        </article>
+
+        <article class="card">
+            <h2>7) 用户反馈收集</h2>
+            <p class="help">对邮件内容进行评价和反馈，帮助系统改进内容推荐。</p>
+            <div class="row">
+                <input id="feedbackUserId" placeholder="userId" value="1">
+                <input id="feedbackDigestId" placeholder="digestId">
+            </div>
+            <div class="row">
+                <input id="feedbackDigestItemId" placeholder="digestItemId">
+                <select id="feedbackType">
+                    <option value="USEFUL">有用</option>
+                    <option value="NORMAL">一般</option>
+                    <option value="FOLLOW">关注</option>
+                </select>
+            </div>
+            <div class="actions">
+                <button id="submitFeedbackBtn">提交反馈</button>
+                <button class="secondary" id="getFeedbackSummaryBtn">查看反馈摘要</button>
+            </div>
+            <div id="feedbackStatus" class="status">尚未执行</div>
+        </article>
+    </section>
+</main>
+
+<script>
+    const resultEl = document.getElementById("result");
+    const today = new Date().toISOString().slice(0, 10);
+    document.getElementById("digestDate").value = today;
+
+    function splitCsv(value) {
+        return value.split(",").map(s => s.trim()).filter(Boolean);
+    }
+
+    function print(obj) {
+        resultEl.textContent = typeof obj === "string" ? obj : JSON.stringify(obj, null, 2);
+    }
+
+    function setStatus(id, text, isError) {
+        const el = document.getElementById(id);
+        el.textContent = text;
+        el.className = isError ? "status error" : "status";
+    }
+
+    async function callApi(url, method, body) {
+        const response = await fetch(url, {
+            method,
+            headers: {"Content-Type": "application/json"},
+            body: body ? JSON.stringify(body) : undefined
+        });
+        const payload = await response.json();
+        if (!response.ok || payload.success === false) {
+            throw new Error(payload.message || payload.error || "request failed");
+        }
+        return payload;
+    }
+
+    let latestDigestId = null;
+    let latestBuildTaskId = null;
+    let latestFetchTaskId = null;
+
+    document.getElementById("setupBtn").onclick = async () => {
+        try {
+            const req = {
+                email: document.getElementById("email").value.trim(),
+                displayName: document.getElementById("displayName").value.trim(),
+                timezone: document.getElementById("timezone").value.trim(),
+                goals: document.getElementById("goals").value.trim(),
+                preferredTopics: splitCsv(document.getElementById("preferredTopics").value),
+                blockedTopics: splitCsv(document.getElementById("blockedTopics").value),
+                deliveryMode: document.getElementById("deliveryMode").value,
+                deliveryTime: document.getElementById("deliveryTime").value.trim(),
+                maxItemsPerDigest: Number(document.getElementById("maxItems").value),
+                explorationRatio: Number(document.getElementById("explorationRatio").value),
+                seedDefaultSources: true
+            };
+            const payload = await callApi("/api/onboarding/setup", "POST", req);
+            const data = payload.data;
+            document.getElementById("userId").value = data.user.id;
+            setStatus("setupStatus", `初始化成功：userId=${data.user.id}，新注入 source=${data.seededSources}`, false);
+            print(payload);
+        } catch (err) {
+            setStatus("setupStatus", "初始化失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("fetchBtn").onclick = async () => {
+        try {
+            const payload = await callApi("/api/admin/fetch-async", "POST", {sourceIds: []});
+            latestFetchTaskId = payload.data.taskId;
+            setStatus("flowStatus", `Fetch 任务已提交：taskId=${latestFetchTaskId}，正在轮询状态...`, false);
+            print(payload);
+            pollFetchTask();
+        } catch (err) {
+            setStatus("flowStatus", "Fetch 失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("fetchSyncBtn").onclick = async () => {
+        try {
+            const payload = await callApi("/api/admin/fetch", "POST", {sourceIds: []});
+            setStatus("flowStatus", "同步 Fetch 完成：" + payload.data, false);
+            print(payload);
+        } catch (err) {
+            setStatus("flowStatus", "同步 Fetch 失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    async function pollFetchTask() {
+        if (!latestFetchTaskId) return;
+        let attempts = 0;
+        const maxAttempts = 40;
+        while (attempts < maxAttempts) {
+            attempts += 1;
+            let payload;
+            try {
+                payload = await callApi("/api/admin/fetch-async/" + latestFetchTaskId, "GET");
+            } catch (err) {
+                setStatus("flowStatus", "Fetch 状态查询失败：" + err.message, true);
+                print(err.message);
+                return;
+            }
+            const status = payload.data.status;
+            if (status === "success") {
+                setStatus("flowStatus", `Fetch 完成：新增 ${payload.data.savedCount ?? 0} 条`, false);
+                print(payload);
+                return;
+            }
+            if (status === "failed") {
+                setStatus("flowStatus", "Fetch 任务失败：" + (payload.data.message || "unknown"), true);
+                print(payload);
+                return;
+            }
+            setStatus("flowStatus", `Fetch 执行中：${status}（第 ${attempts} 次检查）`, false);
+            await new Promise(resolve => setTimeout(resolve, 1200));
+        }
+        setStatus("flowStatus", "Fetch 任务仍在执行，可稍后重试。", true);
+    }
+
+    document.getElementById("buildBtn").onclick = async () => {
+        try {
+            const userId = Number(document.getElementById("userId").value);
+            const digestDate = document.getElementById("digestDate").value.trim();
+            const forceLlm = document.getElementById("forceLlmBuild").checked;
+            const payload = await callApi("/api/admin/digests/build-async", "POST", {userId, digestDate, forceLlm});
+            latestBuildTaskId = payload.data.taskId;
+            setStatus("flowStatus", `Build 任务已提交：taskId=${latestBuildTaskId}，正在轮询状态...`, false);
+            print(payload);
+            pollBuildTask();
+        } catch (err) {
+            setStatus("flowStatus", "Build 失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("prebuildBtn").onclick = async () => {
+        try {
+            const payload = await callApi("/api/admin/digests/prebuild-now", "POST");
+            setStatus("flowStatus", "Prebuild 完成：" + payload.data, false);
+            print(payload);
+        } catch (err) {
+            setStatus("flowStatus", "Prebuild 失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("finalizeBtn").onclick = async () => {
+        try {
+            const payload = await callApi("/api/admin/digests/finalize-pending", "POST");
+            setStatus("flowStatus", "Finalize 完成：" + payload.data, false);
+            print(payload);
+        } catch (err) {
+            setStatus("flowStatus", "Finalize 失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    async function pollBuildTask() {
+        if (!latestBuildTaskId) return;
+        let attempts = 0;
+        const maxAttempts = 30;
+        while (attempts < maxAttempts) {
+            attempts += 1;
+            let payload;
+            try {
+                payload = await callApi("/api/admin/digests/build-async/" + latestBuildTaskId, "GET");
+            } catch (err) {
+                setStatus("flowStatus", "Build 状态查询失败：" + err.message, true);
+                print(err.message);
+                return;
+            }
+            const status = payload.data.status;
+            if (status === "success") {
+                latestDigestId = payload.data.digest.id;
+                const link = document.getElementById("htmlPreviewLink");
+                link.href = "/api/digests/detail/" + latestDigestId + "/html";
+                link.style.display = "inline-block";
+                const llmUsed = payload.data.digest.llmUsed;
+                const strategy = payload.data.digest.editorialStrategy || "unknown";
+                const forceLlm = document.getElementById("forceLlmBuild").checked;
+                if (forceLlm && payload.data.digest.status === "sent" && llmUsed !== true) {
+                    setStatus(
+                        "flowStatus",
+                        "Build 返回的是已发送旧日报，未触发新的 LLM 构建。请更换 digestDate 再测试。",
+                        true
+                    );
+                    print(payload);
+                    return;
+                }
+                setStatus(
+                    "flowStatus",
+                    `Build 完成：digestId=${latestDigestId}，status=${payload.data.digest.status}，llmUsed=${llmUsed}，strategy=${strategy}`,
+                    false
+                );
+                print(payload);
+                return;
+            }
+            if (status === "failed") {
+                setStatus("flowStatus", "Build 任务失败：" + (payload.data.message || "unknown"), true);
+                print(payload);
+                return;
+            }
+            setStatus("flowStatus", `Build 执行中：${status}（第 ${attempts} 次检查）`, false);
+            await new Promise(resolve => setTimeout(resolve, 1500));
+        }
+        setStatus("flowStatus", "Build 任务仍在执行，可稍后再点 Build 或查看日志。", true);
+    }
+
+    document.getElementById("debugBtn").onclick = async () => {
+        try {
+            const userId = Number(document.getElementById("userId").value);
+            const payload = await callApi("/api/admin/digests/debug/" + userId, "GET");
+            setStatus("flowStatus", "Debug 完成", false);
+            print(payload);
+        } catch (err) {
+            setStatus("flowStatus", "Debug 失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("sendBtn").onclick = async () => {
+        try {
+            if (!latestDigestId) {
+                throw new Error("请先 Build 一次日报");
+            }
+            const payload = await callApi("/api/admin/digests/send/" + latestDigestId, "POST");
+            setStatus("flowStatus", "Send 完成，请检查邮箱", false);
+            print(payload);
+        } catch (err) {
+            setStatus("flowStatus", "Send 失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("listSourcesBtn").onclick = async () => {
+        try {
+            const payload = await callApi("/api/sources", "GET");
+            const html = payload.data.map(s => `<span class="pill">${s.name} · ${s.enabled ? "enabled" : "disabled"}</span>`).join("");
+            document.getElementById("sources").innerHTML = html || "no sources";
+            print(payload);
+        } catch (err) {
+            document.getElementById("sources").textContent = "读取失败：" + err.message;
+            print(err.message);
+        }
+    };
+
+    document.getElementById("loadProfileBtn").onclick = async () => {
+        try {
+            const userId = Number(document.getElementById("profileUserId").value);
+            const payload = await callApi("/api/profile/me?userId=" + userId, "GET");
+            const profile = payload.data;
+            if (profile) {
+                document.getElementById("profileOccupation").value = profile.occupation || "";
+                if (profile.interests) {
+                    const interests = Object.entries(profile.interests)
+                        .map(([key, value]) => `${key}`)
+                        .join(", ");
+                    document.getElementById("profileInterests").value = interests;
+                }
+                if (profile.preferredTopics) {
+                    const topics = Object.entries(profile.preferredTopics)
+                        .map(([key, value]) => `${key}`)
+                        .join(", ");
+                    document.getElementById("profilePreferredTopics").value = topics;
+                }
+                if (profile.recentActivities) {
+                    const activities = Object.entries(profile.recentActivities)
+                        .filter(([key, value]) => value === true)
+                        .map(([key, value]) => key)
+                        .join(", ");
+                    document.getElementById("profileRecentActivities").value = activities;
+                }
+                setStatus("profileStatus", "画像加载成功", false);
+            } else {
+                setStatus("profileStatus", "未找到用户画像", true);
+            }
+            print(payload);
+        } catch (err) {
+            setStatus("profileStatus", "加载失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("saveProfileBtn").onclick = async () => {
+        try {
+            const userId = Number(document.getElementById("profileUserId").value);
+            const surveyData = {
+                occupation: document.getElementById("profileOccupation").value.trim(),
+                interests: splitCsv(document.getElementById("profileInterests").value),
+                preferredTopics: splitCsv(document.getElementById("profilePreferredTopics").value),
+                recentActivities: splitCsv(document.getElementById("profileRecentActivities").value)
+            };
+            const payload = await callApi("/api/profile/update/survey?userId=" + userId, "POST", surveyData);
+            setStatus("profileStatus", "画像保存成功", false);
+            print(payload);
+        } catch (err) {
+            setStatus("profileStatus", "保存失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("previewBtn").onclick = async () => {
+        try {
+            const digestId = Number(document.getElementById("previewDigestId").value);
+            if (!digestId) {
+                throw new Error("请输入 digestId");
+            }
+            const link = document.getElementById("emailPreviewLink");
+            link.href = "/api/digests/detail/" + digestId + "/html";
+            link.style.display = "inline-block";
+            setStatus("previewStatus", "预览链接已生成，请点击下方链接查看邮件内容", false);
+        } catch (err) {
+            setStatus("previewStatus", "预览失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("submitFeedbackBtn").onclick = async () => {
+        try {
+            const userId = Number(document.getElementById("feedbackUserId").value);
+            const digestId = Number(document.getElementById("feedbackDigestId").value);
+            const digestItemId = Number(document.getElementById("feedbackDigestItemId").value);
+            const feedbackType = document.getElementById("feedbackType").value;
+            
+            if (!userId || !digestId || !digestItemId) {
+                throw new Error("请填写完整的反馈信息");
+            }
+            
+            const feedbackRequest = {
+                userId: userId,
+                digestId: digestId,
+                digestItemId: digestItemId,
+                feedbackType: feedbackType
+            };
+            
+            const payload = await callApi("/api/feedback", "POST", feedbackRequest);
+            setStatus("feedbackStatus", "反馈提交成功", false);
+            print(payload);
+        } catch (err) {
+            setStatus("feedbackStatus", "反馈提交失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+
+    document.getElementById("getFeedbackSummaryBtn").onclick = async () => {
+        try {
+            const userId = Number(document.getElementById("feedbackUserId").value);
+            if (!userId) {
+                throw new Error("请输入 userId");
+            }
+            
+            const payload = await callApi("/api/feedback/summary?userId=" + userId, "GET");
+            setStatus("feedbackStatus", "反馈摘要获取成功", false);
+            print(payload);
+        } catch (err) {
+            setStatus("feedbackStatus", "反馈摘要获取失败：" + err.message, true);
+            print(err.message);
+        }
+    };
+</script>
+</body>
+</html>
